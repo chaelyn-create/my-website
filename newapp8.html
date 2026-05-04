@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Insight - 주제 일치형 뉴스 센터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .glass-panel {
+            background-color: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 아이보리 뉴스 카드 */
+        .news-card-ivory {
+            background-color: #FFFFF5;
+            border: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .news-card-ivory:hover {
+            transform: translateX(10px);
+            background-color: #ffffff;
+            border-color: #2563eb;
+        }
+
+        .thumb-img {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-6 lg:p-10">
+
+    <!-- Header -->
+    <header class="max-w-[1600px] mx-auto mb-8 flex justify-between items-center text-white">
+        <div>
+            <h1 class="text-4xl font-extrabold tracking-tighter">GLOBAL <span class="text-yellow-300">INSIGHT</span></h1>
+            <p class="text-white/80 text-xs font-bold tracking-[0.2em] mt-1">THE ACCURATE NEWS CURATION</p>
+        </div>
+        <div class="text-right">
+            <p id="live-date" class="text-2xl font-bold"></p>
+            <p id="live-time" class="text-teal-100 font-mono"></p>
+        </div>
+    </header>
+
+    <main class="max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-8 h-[75vh]">
+        
+        <!-- 대한민국 섹션 -->
+        <section class="glass-panel w-full lg:w-1/2 flex flex-col overflow-hidden">
+            <div class="p-6 bg-white/50 border-b flex items-center gap-3">
+                <span class="text-3xl">🇰🇷</span>
+                <h2 class="text-2xl font-extrabold text-slate-800">국내 주요 뉴스</h2>
+            </div>
+            <div id="korea-feed" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scroll">
+                <!-- JS Data -->
+            </div>
+        </section>
+
+        <!-- 전세계 섹션 -->
+        <section class="glass-panel w-full lg:w-1/2 flex flex-col overflow-hidden">
+            <div class="p-6 bg-white/50 border-b flex items-center gap-3">
+                <span class="text-3xl">🌎</span>
+                <h2 class="text-2xl font-extrabold text-slate-800">글로벌 리포트</h2>
+            </div>
+            <div id="global-feed" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scroll">
+                <!-- JS Data -->
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /**
+         * 핵심 데이터 바인딩 (주제와 링크의 일치)
+         * 각 카테고리에 맞는 네이버 뉴스의 '실제 본문 혹은 관련 섹션' 링크를 배치했습니다.
+         */
+        const newsData = {
+            korea: [
+                { 
+                    cat: "경제", 
+                    icon: "fa-chart-line",
+                    title: "국내 증시 및 반도체 수출 동향", 
+                    desc: "삼성전자와 SK하이닉스를 중심으로 한 국내 IT 수출 지표와 코스피 지수의 실시간 변화.",
+                    img: "business", 
+                    url: "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1=101" // 네이버 경제 홈
+                },
+                { 
+                    cat: "정치", 
+                    icon: "fa-landmark",
+                    title: "국회 민생 법안 처리 현황 보고", 
+                    desc: "여야 합의로 진행 중인 주요 민생 안정 대책 및 법안 심사 과정의 최신 소식.",
+                    img: "politics", 
+                    url: "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1=100" // 네이버 정치 홈
+                },
+                { 
+                    cat: "예술", 
+                    icon: "fa-palette",
+                    title: "국내 현대미술 특별 전시 소식", 
+                    desc: "전국 주요 미술관에서 열리는 거장들의 전시 정보와 예술계 트렌드 분석.",
+                    img: "art", 
+                    url: "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1=103" // 네이버 생활/문화 홈
+                },
+                { 
+                    cat: "연예", 
+                    icon: "fa-clapperboard",
+                    title: "K-콘텐츠 글로벌 OTT 점유율 현황", 
+                    desc: "넷플릭스와 디즈니+ 등에서 전 세계적인 인기를 얻고 있는 국내 드라마와 영화 소식.",
+                    img: "pop", 
+                    url: "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1=106" // 네이버 TV/연예 홈
+                }
+            ],
+            global: [
+                { 
+                    cat: "경제", 
+                    icon: "fa-globe",
+                    title: "미국 뉴욕 증시 및 나스닥 마감 시황", 
+                    desc: "금리 인하 전망에 따른 뉴욕 증시의 반응과 엔비디아 등 주요 기술주 동향.",
+                    img: "finance", 
+                    url: "https://news.naver.com/main/list.naver?mode=LS2D&mid=shm&sid1=101&sid2=262" // 네이버 경제-세계경제 섹션
+                },
+                { 
+                    cat: "정치", 
+                    icon: "fa-handshake",
+                    title: "글로벌 정상회의 및 외교 안보 이슈", 
+                    desc: "G7, UN 등 국제기구를 통한 국가 간 협력과 갈등에 관한 실시간 외신 리포트.",
+                    img: "world", 
+                    url: "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1=104" // 네이버 세계 뉴스 홈
+                },
+                { 
+                    cat: "테크", 
+                    icon: "fa-microchip",
+                    title: "글로벌 AI 및 신기술 개발 경쟁", 
+                    desc: "오픈AI, 구글, MS 등 빅테크 기업들의 인공지능 기술 혁신과 시장 점유율 전쟁.",
+                    img: "tech", 
+                    url: "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1=105" // 네이버 IT/과학 홈
+                }
+            ]
+        };
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-date').innerText = now.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+            document.getElementById('live-time').innerText = now.toLocaleTimeString('ko-KR', { hour12: false });
+        }
+
+        function createCard(item) {
+            const imgUrl = `https://loremflickr.com/200/200/${item.img}?random=${Math.random()}`;
+            return `
+                <div class="news-card-ivory p-4 flex gap-4 items-center rounded-2xl" onclick="window.open('${item.url}', '_blank')">
+                    <img src="${imgUrl}" class="thumb-img" alt="news">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fas ${item.icon} text-blue-600 text-[10px]"></i>
+                            <span class="text-[10px] font-black text-blue-800 uppercase tracking-tighter">${item.cat}</span>
+                        </div>
+                        <h3 class="text-[17px] font-extrabold text-slate-900 mb-1 leading-tight">${item.title}</h3>
+                        <p class="text-slate-500 text-xs leading-snug line-clamp-2">${item.desc}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function init() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            const kFeed = document.getElementById('korea-feed');
+            const gFeed = document.getElementById('global-feed');
+            
+            // 초기화 후 렌더링
+            kFeed.innerHTML = '';
+            gFeed.innerHTML = '';
+            newsData.korea.forEach(item => kFeed.innerHTML += createCard(item));
+            newsData.global.forEach(item => gFeed.innerHTML += createCard(item));
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
